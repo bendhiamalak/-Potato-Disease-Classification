@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Health AI | Disease Classifier</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --secondary: #FF9800;
+            --danger: #F44336;
+            --light: #F5F7FA;
+            --dark: #263238;
+            --gray: #607D8B;
+            --white: #FFFFFF;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: radial-gradient(circle at 10% 20%, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.05) 90%);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 2px dashed rgba(76, 175, 80, 0.3);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .upload-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 1.5rem;
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .file-input-label:hover {
+            background-color: rgba(76, 175, 80, 0.2);
+        }
+
+        #fileInput {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        button:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .image-preview {
+            margin: 2rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        #previewImage {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            display: none;
+            object-fit: contain;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border-left: 4px solid var(--primary);
+        }
+
+        .result-card h2 {
+            color: var(--dark);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-card h2 svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        #resultContent {
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .result-label {
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .result-value {
+            font-weight: 600;
+        }
+
+        .healthy {
+            color: var(--primary);
+        }
+
+        .diseased {
+            color: var(--danger);
+        }
+
+        .loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(76, 175, 80, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .secondary-btn {
+            background-color: var(--light);
+            color: var(--dark);
+            box-shadow: none;
+        }
+
+        .secondary-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .confidence-meter {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> AI Potato Disease Detection</h1>
+            <p class="subtitle">Upload an image of a plant leaf to detect diseases with our advanced AI technology</p>
+        </header>
+
+        <div class="upload-card pulse">
+            <div class="upload-container">
+                <div class="file-input-wrapper">
+                    <label for="fileInput" class="file-input-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Drop your image here or click to browse
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                <button id="uploadBtn" disabled>
+                   
+                     🔍 Analyze Disease
+                </button>
+            </div>
+        </div>
+        
+        <div class="image-preview">
+            <img id="previewImage" src="" alt="Preview will appear here">
+        </div>
+        
+        <div class="result-card fade-in" id="resultContainer">
+            <h2>
+                
+                Analysis Results
+            </h2>
+            <div id="resultContent">
+                <p>No image analyzed yet. Please upload a plant leaf image.</p>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const previewImage = document.getElementById('previewImage');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            // Display image preview when file is selected
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        previewImage.src = event.target.result;
+                        previewImage.style.display = 'block';
+                        uploadBtn.disabled = false;
+                        
+                        // Update UI
+                        resultContent.innerHTML = `
+                            <div class="result-item">
+                                <span class="result-label">Image Ready</span>
+                                <span class="result-value healthy">✓</span>
+                            </div>
+                            <p>Click "Analyze Image" to get results.</p>
+                        `;
+                        
+                        // Add animation
+                        resultContainer.classList.add('fade-in');
+                        setTimeout(() => resultContainer.classList.remove('fade-in'), 500);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Handle upload button click
+            uploadBtn.addEventListener('click', async function() {
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Please select an image first.');
+                    return;
+                }
+                
+                // Show loading state
+                resultContent.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Analyzing plant health...</p>
+                    </div>
+                `;
+                document.querySelector('.loading').style.display = 'flex';
+                uploadBtn.disabled = true;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    // Send to FastAPI backend
+                    const response = await fetch('http://localhost:8000/predict', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('API Response:', result);
+                    
+                    // Determine result type
+                    const isHealthy = result.class === 'Healthy';
+                    const resultClass = isHealthy ? 'healthy' : 'diseased';
+                    const resultIcon = isHealthy ? '✓' : '⚠️';
+                    const resultMessage = isHealthy 
+                        ? 'Your plant appears to be healthy!' 
+                        : 'This plant may need attention!';
+                    
+                    // Calculate confidence percentage
+                    const confidencePercent = Math.round(result.confidence * 100);
+                    
+                    // Display results with modern UI
+                    resultContent.innerHTML = `
+                        <div class="result-item">
+                            <span class="result-label">Status</span>
+                            <span class="result-value ${resultClass}">${resultIcon} ${result.class}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Confidence</span>
+                            <span class="result-value">${confidencePercent}%</span>
+                        </div>
+                        <div class="confidence-meter">
+                            <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Message</span>
+                            <span class="result-value ${resultClass}">${resultMessage}</span>
+                        </div>
+                    `;
+                    
+                    // Add animation
+                    resultContainer.classList.add('fade-in');
+                    setTimeout(() => resultContainer.classList.remove('fade-in'), 500);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    resultContent.innerHTML = `
+                        <div class="result-item">
+                            <span class="result-label">Error</span>
+                            <span class="result-value diseased">Analysis failed</span>
+                        </div>
+                        <p>${error.message}. Please try again.</p>
+                    `;
+                } finally {
+                    uploadBtn.disabled = false;
+                }
+            });
+            
+            // Optional: Test API connection on page load
+            async function testConnection() {
+                try {
+                    const response = await fetch('http://localhost:8000/ping');
+                    const text = await response.text();
+                    console.log('API connection test:', text);
+                } catch (error) {
+                    console.warn('API connection test failed:', error);
+                }
+            }
+            
+            testConnection();
+        });
+    </script>
+</body>
+</html>
